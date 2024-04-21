@@ -1,5 +1,6 @@
 import re, copy
-from itertools import combinations
+from itertools import product
+import math
 from pprint import pprint
 
 class CoordinateFunction:
@@ -20,6 +21,8 @@ class CoordinateFunction:
         self.best_linear_approximation: list[tuple[int]] = []
         self.autocorrelation_coefs: list[float] = []
         self.bent_status: bool = False
+        self.zapret: list[int] = []
+        self.strong_equiprobability: bool = False
 
     def compute_coordinate_function(self) -> None:
         for value in self.substitute:
@@ -38,38 +41,6 @@ class CoordinateFunction:
             for j in range(1, i):
                 pascal_triangle[i - 1][j] = pascal_triangle[i - 2][j - 1] ^ pascal_triangle[i - 1][j - 1]
         self.zhegalkin_polynomial = pascal_triangle[vector_len - 1]
-
-    # # Нужно для вывода многочлена Жегалкина
-    # def _find_combinations(self, arr, k):
-    #     result = []
-    #     n = len(arr)
-        
-    #     # Вспомогательная функция для поиска комбинаций
-    #     def backtrack(start, combination):
-    #         if len(combination) == k:
-    #             result.append(combination[:])
-    #             return
-    #         for i in range(start, n):
-    #             combination.append(arr[i])
-    #             backtrack(i + 1, combination)
-    #             combination.pop()
-
-    #     backtrack(0, [])
-    #     return result
-
-    # # Нужно для вывода многочлена Жегалкина
-    # def _get_terms(self) -> list[list[str]]:
-    #     ZP = []
-    #     ZP.append(1)  # начальное значение
-        
-    #     terms = [f"x_{i}" for i in range(1, self.power + 1)]
-    #     for i in range(1, self.power + 1):
-    #         combinations = self._find_combinations(terms, i)
-    #         for el in combinations:
-    #             # Произведение переменных в текущей комбинации
-    #             product = ' '.join(el)
-    #             ZP.append(product)
-    #     return ZP
 
     # Строковое представление многочлена Жегалкина
     def get_str_ZP(self) -> None:
@@ -100,96 +71,132 @@ class CoordinateFunction:
     def compute_predominance(self) -> None:
         self.predominance = 1 - (self.weight) / (2 ** (self.power - 1))
     
-    # # Нужно для Л2 П2, генерирует возможные значения x_1,...,x_n
-    # def _generate_binary_combinations(self):
-    #     def generate_combinations_helper(current_combination, index):
-    #         if index == self.power:
-    #             yield current_combination
-    #             return
-    #         current_combination[index] = 0
-    #         yield from generate_combinations_helper(current_combination, index + 1)
-    #         current_combination[index] = 1
-    #         yield from generate_combinations_helper(current_combination, index + 1)
-
-    #     initial_combination = [0] * self.power
-    #     yield from generate_combinations_helper(initial_combination, 0)
-
-    # def _compute_function_value(self, current_combination: list[int], coeffs: list[int]) -> int:
-    #     zp = [1]  # initial state
-
-    #     for i in range(1, len(current_combination) + 1):
-    #         combs = combinations(current_combination, i)
-    #         for el in combs:
-    #             product = 1
-    #             for num in el:
-    #                 product *= num
-    #             zp.append(product)
-
-    #     for i in range(2 ** self.power):
-    #         zp[i] *= coeffs[i]
-
-    #     return zp.count(1) % 2
-
-    # def generate_truth_table(self) -> dict[tuple[int], int]:
-    #     truth_table: dict[tuple[int], int] = dict()
-    #     for terms_value in self._generate_binary_combinations():
-    #         print(terms_value)
-    #         truth_table[tuple(terms_value)] = self._compute_function_value(terms_value, self.zhegalkin_polynomial)
-    #     return truth_table
-    
     def generate_truth_table(self) -> None:
         for i in range(len(self.vector)):
             bin_value = bin(i)[2:].zfill(self.power)
             key = tuple([int(bit) for bit in bin_value])
             self.truth_table[key] = self.vector[i]
 
-    def compute_zapret(self) -> list[int]:
-        self.generate_truth_table()
-        zapret = []
+    # def compute_zapret(self) -> None:
+    #     self.generate_truth_table()
+    #     zapret = []
 
-        # init current truth table
-        current_truth_table = copy.deepcopy(self.truth_table)
-        for key, value in current_truth_table.items():
-            current_truth_table[key] = tuple([value])
+    #     # init current truth table
+    #     current_truth_table = copy.deepcopy(self.truth_table)
+    #     for key, value in current_truth_table.items():
+    #         current_truth_table[key] = tuple([value])
         
-        # start compute zapret
-        # while len(current_truth_table.values()) != 1:
-        while True:
-            next_truth_table: dict[tuple[int], tuple[int]] = dict()
-            for combination, value in current_truth_table.items():
-                for i in [0, 1]:
-                    extended_combination = tuple(list(combination) + [i])
-                    extended_key = tuple(list(value) + [self.truth_table[extended_combination[len(extended_combination) - self.power:]]])
-                    next_truth_table[extended_combination] = extended_key
+    #     # start compute zapret
+    #     while True:
+    #         next_truth_table: dict[tuple[int], tuple[int]] = dict()
+    #         for combination, value in current_truth_table.items():
+    #             for i in [0, 1]:
+    #                 extended_combination = tuple(list(combination) + [i])
+    #                 extended_key = tuple(list(value) + [self.truth_table[extended_combination[len(extended_combination) - self.power:]]])
+    #                 next_truth_table[extended_combination] = extended_key
+    #         # pprint(next_truth_table)
 
-            # Считаем частоту значений
-            value_frequency = {}    
-            for value in next_truth_table.values():
-                value_frequency[value] = value_frequency.get(value, 0) + 1
-            # pprint(value_frequency)
+    #         # Считаем частоту значений
+    #         value_frequency = {}    
+    #         for value in next_truth_table.values():
+    #             value_frequency[value] = value_frequency.get(value, 0) + 1
 
-            if len(value_frequency.values()) == 1:
-                for value in next_truth_table.values():
-                    zapret = list(value)
-                    break
+    #         if len(value_frequency.values()) == 1:
+    #             for value in next_truth_table.values():
+    #                 zapret = list(value)
+    #                 break
+    #             break
+            
+    #         # Находим наименьшую частоту
+    #         min_frequency = min(value_frequency.values())
+    #         min_frequency_value = None
+    #         for value, frequency in value_frequency.items():
+    #             if frequency == min_frequency:
+    #                 min_frequency_value = value
+    #                 break
+            
+    #         current_truth_table: dict[tuple[int], tuple[int]] = dict()
+    #         for key, value in next_truth_table.items():
+    #             if value == min_frequency_value:
+    #                 current_truth_table[key] = value
+
+    #     # invert last value
+    #     zapret[-1] = (zapret[-1] + 1) % 2
+    #     self.zapret = zapret
+    def compute_zapret(self) -> None:
+        class Tree:
+            def __init__(self, vec, power):
+                self.vectors = vec.copy()
+                self.parent = self
+                self.c = []
+                self.power = power
+                
+            def next_step(self, func):
+                self.zero = Tree([], self.power)
+                self.one = Tree([], self.power)
+                self.zero.parent = self
+                self.one.parent = self
+                self.zero.c = self.c + [0]
+                self.one.c = self.c + [1]
+                for i in self.vectors:
+                    j = i[-(self.power-1):]
+                    sum = 0
+                    for k in range(len(j)):
+                        sum = sum + j[k] * (2**(self.power-k-1))
+                    if (func[sum]):
+                        self.one.vectors.append(i + [0])
+                    else:
+                        self.zero.vectors.append(i + [0])
+                    
+                    sum = sum + 1
+                    if (func[sum]):
+                        self.one.vectors.append(i + [1])
+                    else:
+                        self.zero.vectors.append(i + [1])
+                                    
+        vec = product([0, 1], repeat = self.power-1)
+        v = [list(i) for i in vec]
+        t = Tree(v, self.power)
+        zapret = [0 for i in range(self.power)]
+
+        tmp = [t]
+        min = math.inf
+        next = []
+        count = 0
+        while(1):
+            for i in tmp:
+                i.next_step(self.vector)
+                if (len(i.one.vectors) < min):
+                    min = len(i.one.vectors)
+                    next = [i.one]
+                elif (len(i.one.vectors) == min):
+                    next.append(i.one)
+                    
+                if (len(i.zero.vectors) < min):
+                    min = len(i.zero.vectors)
+                    next = [i.zero]
+                elif (len(i.zero.vectors) == min):
+                    next.append(i.zero)
+            if (min == 0):
                 break
-            
-            # Находим наименьшую частоту
-            min_frequency = min(value_frequency.values())
-            min_frequency_value = None
-            for value, frequency in value_frequency.items():
-                if frequency == min_frequency:
-                    min_frequency_value = value
-                    break
-            
-            current_truth_table: dict[tuple[int], tuple[int]] = dict()
-            for key, value in next_truth_table.items():
-                if value == min_frequency_value:
-                    current_truth_table[key] = value
+            tmp = next.copy()
+            next = []
+            count = count + 1
+            if (min == 2**(self.power) and count > self.power*4):
+                zapret = -1
+                break
+        for i in tmp:
+            i.next_step(self.vector)
+            if (len(i.one.vectors) == 0):
+                zapret = i.one.c
+            if (len(i.zero.vectors) == 0):
+                zapret = i.zero.c
 
-        # invert last value
-        zapret[-1] = (zapret[-1] + 1) % 2
-        return zapret
+        self.zapret = zapret
+
+    def define_strong_equiprobability(self):
+        if self.zapret != []:
+            self.strong_equiprobability = True
     
     # Вычисляем вектор БПФ
     def _compute_BPF(self) -> list[int]:

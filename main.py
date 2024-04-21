@@ -1,16 +1,16 @@
 from substitute import Substitute
-from coordinate_function import CoordinateFunction
 
 POWER = 6
 ELEMENTS_COUNT = 2 ** POWER
 
 def main() -> None:
-    # test_vector = [28, 60, 15, 2, 4, 53, 33, 22, 56, 30, 21, 38, 41, 20, 47, 32, 26, 46, 59, 35, 48, 23, 61, 18, 37, 51, 42, 50, 44, 52, 24, 5, 16, 43, 40, 34, 0, 11, 9, 63, 3, 8, 27, 17, 55, 54, 49, 7, 6, 13, 58, 14, 57, 31, 45, 29, 19, 39, 36, 10, 25, 62, 12, 1]
+    # test_vector = [34, 6, 63, 0, 18, 21, 43, 55, 42, 14, 16, 32, 45, 47, 15, 58, 8, 10, 35, 38, 11, 13, 27, 33, 51, 59, 23, 29, 52, 2, 39, 62, 54, 20, 40, 57, 24, 28, 46, 17, 9, 41, 53, 30, 44, 50, 12, 36, 49, 19, 31, 61, 60, 7, 25, 37, 26, 5, 56, 1, 4, 48, 22, 3]
     # POWER = 4
     # test_vector = [3, 5, 15, 12, 8, 0, 4, 14, 10, 6, 1, 11, 9, 13, 2, 7]
     # POWER = 3
     # test_vector = [6, 4, 3, 1, 0, 2, 5, 7]
     # test_vector = [0, 0, 0, 7, 0, 7, 7, 7]
+    # test_vector = [47, 38, 17, 44, 7, 43, 24, 27, 54, 33, 16, 62, 31, 9, 53, 15, 32, 10, 1, 56, 63, 28, 61, 52, 22, 57, 26, 29, 55, 45, 40, 8, 3, 48, 18, 35, 34, 6, 51, 46, 0, 12, 19, 11, 49, 5, 58, 59, 30, 39, 13, 2, 36, 37, 60, 4, 21, 41, 20, 14, 50, 42, 23, 25]
     # substitute = Substitute(POWER, test_vector)
     substitute = Substitute(POWER)
     print(str.center("Лабораторная работа №1", 100, "="))
@@ -20,7 +20,6 @@ def main() -> None:
     for i, coordinate_function in enumerate(substitute.coordinate_functions):
         coordinate_function.compute_coordinate_function()
         print(f"f_{i + 1} = " + str(coordinate_function.vector))
-        # print(coordinate_function.vector)
     print("№3. Вычисление веса координатных функций.")
     for i, coordinate_function in enumerate(substitute.coordinate_functions):
         coordinate_function.compute_weight()
@@ -41,11 +40,14 @@ def main() -> None:
         coordinate_function.compute_predominance()
         print(f"delta(f_{i + 1}) = " + str(coordinate_function.predominance))
 
-    # print("№2. Построение запретов")
-    # for i, coordinate_function in enumerate(substitute.coordinate_functions):
-    #     print(f"zapret(f_{i + 1}) = " + str(coordinate_function.compute_zapret()))
-    # print("№3. Проверка на равновероятность.")
-    # Если нет запретов, то сильно равновероятна, иначе нет
+    print("№2. Построение запретов")
+    for i, coordinate_function in enumerate(substitute.coordinate_functions):
+        coordinate_function.compute_zapret()
+        print(f"zapret(f_{i + 1}) = " + str(coordinate_function.zapret))
+    print("№3. Проверка на равновероятность.")
+    for i, coordinate_function in enumerate(substitute.coordinate_functions):
+        coordinate_function.define_strong_equiprobability()
+        print(f"Является ли функция f_{i + 1} сильно равновероятной: {coordinate_function.strong_equiprobability}")
         
     print(str.center("Лабораторная работа №3", 100, "="))
     print("№1. Корреляционная иммунность и эластичность функций")
