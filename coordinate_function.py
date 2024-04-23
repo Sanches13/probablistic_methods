@@ -196,7 +196,7 @@ class CoordinateFunction:
 
     def define_strong_equiprobability(self):
         if self.zapret != []:
-            self.strong_equiprobability = True
+            self.strong_equiprobability = False
     
     # Вычисляем вектор БПФ
     def _compute_BPF(self) -> list[int]:
